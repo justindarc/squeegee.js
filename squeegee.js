@@ -93,26 +93,28 @@ var Squeegee = function Squeegee(element) {
   
   var self = this;
   
-  $element.bind('touchstart', function(evt) {
-    var touches = evt.originalEvent.changedTouches;
+  $element.bind(isTouchSupported ? 'touchstart' : 'mousedown', function(evt) {
+    var touch = isTouchSupported ? evt.originalEvent.changedTouches[0] : evt;
     
     if (!isScaling && isTranslating) {
       isScaling = true;
-      setLastTouchB(touches[0]);
+      setLastTouchB(touch);
     }
     
     if (!isTranslating) {
       isTranslating = true;
-      setLastTouchA(touches[0]);
+      setLastTouchA(touch);
     }
         
     evt.preventDefault();
   });
 
-  $element.bind('touchmove', function(evt) {
-    var touches = evt.originalEvent.touches;
-    var touchA = getNewTouchA(touches);
-    var touchB = getNewTouchB(touches);
+  $(window).bind(isTouchSupported ? 'touchmove' : 'mousemove', function(evt) {
+    if (!isTranslating && !isScaling) return;
+
+    var touches = isTouchSupported && evt.originalEvent.touches;
+    var touchA = isTouchSupported ? getNewTouchA(touches) : evt;
+    var touchB = isTouchSupported ? getNewTouchB(touches) : null;
     
     // Handle translating.
     if (isTranslating) { 
@@ -142,12 +144,12 @@ var Squeegee = function Squeegee(element) {
     setLastTouchB(touchB);
   });
   
-  $element.bind('touchend touchcancel', function(evt) {
-    var touches = evt.originalEvent.touches;
-    var touchA = getNewTouchA(touches);
-    var touchB = getNewTouchB(touches);
+  $(window).bind(isTouchSupported ? 'touchend touchcancel' : 'mouseup', function(evt) {
+    var touches = isTouchSupported && evt.originalEvent.touches;
+    var touchA = isTouchSupported ? getNewTouchA(touches) : evt;
+    var touchB = isTouchSupported ? getNewTouchB(touches) : null;
     
-    if (isTranslating && !touchA) {
+    if (isTranslating && (!touchA || !isTouchSupported)) {
       isTranslating = false;
       self.redraw();
     }
